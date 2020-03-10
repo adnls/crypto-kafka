@@ -4,10 +4,13 @@
     <title>CryptoKafka</title>
   </head>
   <body>
-        <h1>Hello World!</h1>
+        <h1 id="test">Hello World!</h1>
           <script src="/socket.io/socket.io.js"></script>
             <script>
               var socket = io();
+              socket.on('hello-message', function(msg){
+                document.getElementById("test").innerHTML = msg
+              });
           </script>
   </body>
 </html>
