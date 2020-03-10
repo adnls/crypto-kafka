@@ -1,4 +1,5 @@
-var app = require('express')();
+var express = require('express')
+var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
@@ -14,14 +15,19 @@ client = new kafka.KafkaClient({
 
 var offset = new kafka.Offset(client);
 
+//find the last offset then launch the server
 offset.fetch([
         { topic: 'BTC', partition: 0, time: -1, maxNum: 1 }
     ], function (err, data) {
 
+        //get last offset
         console.log(data)
         lastOffset = data['BTC']['0'] -1
         console.log(lastOffset)
 
+        //create consumer which
+        //auto commits
+        //start from last offset -1
         consumer = new Consumer (
             client,
             [{topic: 'BTC', partition: 0, offset: lastOffset}],
@@ -31,10 +37,18 @@ offset.fetch([
             }
         );
 
+        app.use('/static', express.static(__dirname + '/public'));
+
+        //https endpoint
         app.get('/', function(req, res){
-          res.sendFile(__dirname + '/index.html');
+          res.sendFile(__dirname + '/public/index.html');
         });
 
+        app.get('/blabla', function(req, res) {
+            res.send("hello!")
+        })
+
+        //ws endpoint
         io.on('connection', function(socket){
 
           console.log('a user connected');
@@ -47,6 +61,8 @@ offset.fetch([
           });
         });
 
+        //consumer event
+        //stores last value
         consumer.on('message', function(msg){
                 lastValue = msg.value
                 console.log("Kafka msg : " + lastValue)
@@ -54,6 +70,7 @@ offset.fetch([
             }
         );
 
+        //listen on localhost:3000
         http.listen(3000, function(){
           console.log('listening on *:3000');
         });
